@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cap-conformance"
+version = "0.1.0"
+description = "Conformance test suites for CAP (Cooperative Agent Protocol)"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [
+    { name = "CAP Authors" },
+]
+
+dependencies = [
+    "cap-sdk",
+    "grpcio>=1.70.0",
+    # protobuf>=7.35 required by BSR-generated gencode (cap.v0.core.*).
+    "protobuf>=7.35.0",
+    "cryptography>=42.0",
+    "pydantic>=2.6",
+    "pyyaml>=6.0",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.urls]
+Repository = "https://github.com/R-Okauchi/cap"
+
+[tool.uv.sources]
+cap-sdk = { path = "../cap-reference/python", editable = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["cap_bench"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = [
+    "../cap-spec/gen/python",
+    "../cap-reference/python",
+]

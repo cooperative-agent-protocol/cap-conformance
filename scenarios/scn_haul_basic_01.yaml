@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 CAP Authors
+# scn_haul_basic_01 — single dump_truck happy-path haul
+#
+# Mirror of scn_excavate_basic_01 but for the construction.haul_route skill.
+# Validates that a conformant implementation can:
+#   1. Resolve construction.haul_route alongside other registered skills (e.g. via
+#      intent_keywords).
+#   2. Select a dump_truck for required_skills=[construction.haul_route].
+#   3. Produce a 1-node TaskGraph for construction.haul_route.
+#   4. Verify expected_effects (volume_dumped_m3 + payload_delta_m3)
+#      cleanly when the measured metrics meet the contract.
+#
+# The truck pose lies inside the dump zone (where dumping happens), so
+# the ``machine_pose_in_zone`` precondition passes.
+
+id: scn_haul_basic_01
+description: |
+  Single dump_truck stationed inside the dump zone. Receives a haul
+  instruction and the verifier confirms volume_dumped_m3 met.
+instruction: "ZoneDump へ 5 m³ 運搬してください"
+
+initial_world:
+  machines:
+    - id: ic120-01
+      type: dump_truck
+      model: ic120
+      pose: [20.0, 30.0, 0.0]  # inside dump zone (matches center)
+      fuel_percent: 100.0
+      payload_capacity_m3: 6.0  # bigger than scenario target so capacity check passes
+  zones:
+    - id: ZoneDump
+      type: dump
+      center: [20.0, 30.0]
+      radius_m: 5.0
+      volume_m3: 5.0  # remaining capacity in the dump zone
+      slope_deg_max: 3.0
+  obstacles: []
+
+expected_task_graph:
+  must_contain_skills:
+    - construction.haul_route
+  forbidden_skills: []
+  min_node_count: 1
+  max_node_count: 3
+
+success_metrics:
+  task_state: SUCCEEDED
+  no_safety_abort: true
+  no_recovery: true
+  duration_s_max: 300.0
+
+allowed_recovery: []
+max_cycles: 30
+budget_seconds: 600.0
+
+tags:
+  - baseline
+  - earthwork
+  - haul

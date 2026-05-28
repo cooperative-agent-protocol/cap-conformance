@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 CAP Authors
+# scn_excavate_underyield_01 — L7 verification failure path
+#
+# Same shape as scn_excavate_basic_01, but ``simulator_overrides.yield_factor``
+# is set to 0.3 — the mock backend reports only 30% of the target volume
+# excavated. The construction.excavate_batch skill's expected_effects require the full
+# zone.volume_m3 to be delivered, so the verifier must label this run
+# L7_VERIFICATION_FAILURE (the inverse of L3 from scn_terrain_too_steep_01).
+#
+# Note: ``yield_factor`` is a TEST-ONLY hook in cap-conformance. Real
+# implementation runs ignore it (the field lives in
+# ``spec.simulator_overrides`` so its scope is unambiguous).
+
+id: scn_excavate_underyield_01
+description: |
+  Excavator dispatched normally, but the simulator delivers only 30% of
+  the target volume. The skill's expected_effects require the full
+  volume, so verification must fail with L7.
+instruction: "ZoneA を 5 m³ 掘削してください"
+
+initial_world:
+  machines:
+    - id: zx120-01
+      type: excavator
+      model: zx120
+      pose: [0.0, 0.0, 0.0]
+      fuel_percent: 100.0
+  zones:
+    - id: ZoneA
+      type: excavation
+      center: [10.0, 5.0]
+      radius_m: 4.0
+      volume_m3: 5.0
+      soil_class: clay  # implies harder digging — narrative consistency with low yield
+      slope_deg_max: 5.0
+  obstacles: []
+
+expected_task_graph:
+  must_contain_skills:
+    - construction.excavate_batch  # dispatched, but verification will fail post-execution
+
+simulator_overrides:
+  yield_factor: 0.3  # backend delivers 30% of target → 1.5 m³ vs 5.0 m³ promised
+
+success_metrics:
+  task_state: FAILED
+  expected_failure_label: L7_VERIFICATION_FAILURE
+  no_safety_abort: true
+  no_recovery: true
+
+allowed_recovery: []
+max_cycles: 5
+budget_seconds: 60.0
+
+tags:
+  - verification
+  - earthwork
+  - l7_target

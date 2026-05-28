@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 CAP Authors
+# scn_truck_wrong_position_01 — L3 machine_pose_in_zone violation
+#
+# Same structure as scn_haul_basic_01 but the truck is parked far from
+# the dump zone. construction.haul_route's ``machine_pose_in_zone`` precondition
+# (severity=hard) must catch this and refuse dispatch — the system
+# never sends a WorkOrder.
+
+id: scn_truck_wrong_position_01
+description: |
+  Dump truck dispatched 50m away from the dump zone. construction.haul_route requires
+  the truck to be at the load_point / dump zone before dispatch; backend
+  must refuse with L3.
+instruction: "ZoneDump へ 5 m³ 運搬してください"
+
+initial_world:
+  machines:
+    - id: ic120-01
+      type: dump_truck
+      model: ic120
+      pose: [80.0, 80.0, 0.0]  # 60m+ from dump zone center → outside zone
+      fuel_percent: 100.0
+      payload_capacity_m3: 6.0
+  zones:
+    - id: ZoneDump
+      type: dump
+      center: [20.0, 30.0]
+      radius_m: 5.0
+      volume_m3: 5.0
+      slope_deg_max: 3.0
+  obstacles: []
+
+expected_task_graph:
+  must_contain_skills: []
+  forbidden_skills:
+    - construction.haul_route  # backend must refuse this skill before dispatch
+
+success_metrics:
+  task_state: FAILED
+  expected_failure_label: L3_PRECONDITION_FAILURE
+  no_safety_abort: true
+  no_recovery: true
+
+allowed_recovery: []
+max_cycles: 5
+budget_seconds: 60.0
+
+tags:
+  - precondition
+  - earthwork
+  - haul
+  - l3_target

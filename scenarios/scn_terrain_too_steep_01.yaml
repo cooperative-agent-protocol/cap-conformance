@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 CAP Authors
+# scn_terrain_too_steep_01 — slope precondition violation
+#
+# Same shape as scn_excavate_basic_01, but the excavation zone declares
+# slope_deg_max=30.0, which exceeds the construction.excavate_batch skill's slope
+# precondition. A precondition-aware backend must label this as
+# L3_PRECONDITION_FAILURE before any dispatch.
+
+id: scn_terrain_too_steep_01
+description: |
+  Single excavator, one excavation zone whose slope_deg_max exceeds the
+  construction.excavate_batch slope precondition. A precondition-aware dispatcher
+  must refuse to start.
+instruction: "ZoneSteep を 5 m³ 掘削してください"
+
+initial_world:
+  machines:
+    - id: zx120-01
+      type: excavator
+      model: zx120
+      pose: [0.0, 0.0, 0.0]
+      fuel_percent: 100.0
+  zones:
+    - id: ZoneSteep
+      type: excavation
+      center: [10.0, 5.0]
+      radius_m: 4.0
+      volume_m3: 5.0
+      soil_class: gravel
+      slope_deg_max: 30.0  # exceeds the construction.excavate_batch slope precondition
+  obstacles: []
+
+expected_task_graph:
+  must_contain_skills: []
+  forbidden_skills:
+    - construction.excavate_batch  # precondition-aware backend should refuse to dispatch
+
+success_metrics:
+  task_state: FAILED  # scenario expects refusal, not success
+  expected_failure_label: L3_PRECONDITION_FAILURE  # specifically: slope precondition
+  no_safety_abort: true
+  no_recovery: true
+
+allowed_recovery: []
+max_cycles: 5
+budget_seconds: 60.0
+
+tags:
+  - precondition
+  - earthwork
+  - l3_target

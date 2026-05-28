@@ -1,0 +1,14 @@
+CAP Conformance Test Suite
+Copyright 2026 CAP Authors
+
+This product includes software developed by the CAP project
+(https://cap-protocol.dev — pending public release).
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This repository contains conformance test suites for the
+Cooperative Agent Protocol (CAP). Core Level 1/2/3 tests verify
+universal CAP-Core semantics; per-Domain-Pack tests live under
+`domains/<name>/` and are opt-in.
+
+Trademarks: see the cap-spec repository's TRADEMARK_POLICY.md.

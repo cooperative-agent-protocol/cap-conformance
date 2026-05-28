@@ -1,0 +1,58 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 CAP Authors
+# scn_excavate_basic_01 — single-machine baseline excavation
+#
+# Baseline scenario. The simplest possible "instruction → success"
+# path: one excavator, one excavation zone, no obstacles, no recovery
+# allowed. If this does not pass on a conformant implementation, the
+# bench itself is broken.
+#
+# Related scenarios derived from this:
+#   scn_truck_wrong_position_01 — adds a misplaced dump_truck
+#   scn_terrain_too_steep_01 — slope_deg_max triggers precondition refusal
+
+id: scn_excavate_basic_01
+description: |
+  Single excavator, one excavation zone, no obstacles. Tests the
+  happy-path construction.excavate_batch flow end to end.
+instruction: "ZoneA を 5 m³ 掘削してください"
+
+initial_world:
+  machines:
+    - id: zx120-01
+      type: excavator
+      model: zx120
+      pose: [0.0, 0.0, 0.0]
+      fuel_percent: 100.0
+  zones:
+    - id: ZoneA
+      type: excavation
+      center: [10.0, 5.0]
+      radius_m: 4.0
+      volume_m3: 5.0
+      soil_class: sand
+      slope_deg_max: 5.0
+  obstacles: []
+
+expected_task_graph:
+  must_contain_skills:
+    - construction.excavate_batch
+  forbidden_skills: []
+  min_node_count: 1
+  max_node_count: 3
+
+success_metrics:
+  task_state: SUCCEEDED
+  no_safety_abort: true
+  no_recovery: true
+  volume_excavated_m3_min: 4.5  # 90% of target
+  bucket_fill_avg_min: 0.5
+  duration_s_max: 300.0
+
+allowed_recovery: []  # no_recovery=true means none permitted
+max_cycles: 30
+budget_seconds: 600.0
+
+tags:
+  - baseline
+  - earthwork

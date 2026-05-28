@@ -1,0 +1,88 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2026 CAP Authors
+# scn_excavate_haul_chain_01 — multi-machine excavate+haul coordination
+#
+# End-to-end multi-machine scenario. Validates that a conformant
+# implementation can:
+#
+#   1. Accept ScenarioSpec.expected_assignments and produce a 2-task
+#      allocation (one per skill / machine pair).
+#   2. Compile and dispatch both tasks (no inter-machine deps, so they
+#      run concurrently).
+#   3. Synthesize / measure both excavate (volume_excavated_m3,
+#      bucket_fill_avg) and haul (volume_dumped_m3, payload_delta_m3)
+#      metrics, since both excavation and dump zones are present.
+#   4. Pass expected_effects of both construction.excavate_batch
+#      (volume_excavated_delta_min) and construction.haul_route (zone_volume_dumped_m3
+#      + machine_payload_delta_m3) under nominal yield_factor.
+#
+# Exercises multi-skill registry resolution, multi-precondition
+# evaluation, multi-effect verification, zone state plumbing across
+# both tasks, and topological dispatch.
+
+id: scn_excavate_haul_chain_01
+description: |
+  Excavator excavates ZoneSrc; dump truck (already parked at ZoneDump)
+  hauls/dumps the same volume. Single dispatch produces 2 concurrent
+  tasks; both must complete cleanly.
+instruction: "ZoneSrc から 5 m³ 掘削して ZoneDump に運搬してください"
+
+initial_world:
+  machines:
+    - id: zx120-01
+      type: excavator
+      model: zx120
+      pose: [5.0, 5.0, 0.0]  # inside ZoneSrc
+      fuel_percent: 100.0
+    - id: ic120-01
+      type: dump_truck
+      model: ic120
+      pose: [20.0, 30.0, 0.0]  # inside ZoneDump
+      fuel_percent: 100.0
+      payload_capacity_m3: 6.0
+  zones:
+    - id: ZoneSrc
+      type: excavation
+      center: [5.0, 5.0]
+      radius_m: 4.0
+      volume_m3: 5.0
+      soil_class: sand
+      slope_deg_max: 5.0
+    - id: ZoneDump
+      type: dump
+      center: [20.0, 30.0]
+      radius_m: 5.0
+      volume_m3: 5.0
+      slope_deg_max: 3.0
+  obstacles: []
+
+expected_assignments:
+  - skill: construction.excavate_batch
+    machine_id: zx120-01
+    zone_id: ZoneSrc
+  - skill: construction.haul_route
+    machine_id: ic120-01
+    zone_id: ZoneDump
+
+expected_task_graph:
+  must_contain_skills:
+    - construction.excavate_batch
+    - construction.haul_route
+  forbidden_skills: []
+  min_node_count: 2
+  max_node_count: 2
+
+success_metrics:
+  task_state: SUCCEEDED
+  no_safety_abort: true
+  no_recovery: true
+  duration_s_max: 300.0
+
+allowed_recovery: []
+max_cycles: 30
+budget_seconds: 600.0
+
+tags:
+  - chain
+  - earthwork
+  - multi_machine
