@@ -57,6 +57,25 @@ def test_skill_invocation_core_is_domain_agnostic():
     assert inv2.skill_id == "construction.haul_route"
 
 
+def test_workorder_carries_typed_invocation_and_parameters_is_deprecated():
+    """WorkOrder.invocation(SkillInvocation) が domain typed param を運び、parameters は deprecated。"""
+    from cap.v0.core import site_agent_pb2
+
+    wo = site_agent_pb2.WorkOrder(task_id="t1", target_machine_id="zx200", skill="excavate_batch")
+    wo.invocation.skill_id = "construction.excavate_batch"
+    wo.invocation.typed_params.Pack(
+        construction.ExcavateBatchParams(target_zone_id="dig-A", target_volume_m3=9.0, max_cycles=3))
+
+    wo2 = site_agent_pb2.WorkOrder.FromString(wo.SerializeToString())
+    assert wo2.invocation.skill_id == "construction.excavate_batch"
+    out = construction.ExcavateBatchParams()
+    wo2.invocation.typed_params.Unpack(out)
+    assert out.target_volume_m3 == 9.0 and out.max_cycles == 3
+    # parameters は RFC-0001 で deprecated (型付きは invocation.typed_params へ)
+    fields = {f.name: f for f in site_agent_pb2.WorkOrder.DESCRIPTOR.fields}
+    assert fields["parameters"].GetOptions().deprecated is True
+
+
 def test_skill_invocation_metadata_is_freeform_and_separate():
     """metadata は自由記述 map<string,string> で、型付き typed_params とは別物。"""
     inv = skill_pb2.SkillInvocation(skill_id="construction.dump")
