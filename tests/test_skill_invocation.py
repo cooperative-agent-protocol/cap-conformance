@@ -102,6 +102,56 @@ def test_skill_execution_carries_typed_invocation_and_parameters_is_deprecated()
     assert fields["parameters"].GetOptions().deprecated is True
 
 
+def test_construction_skill_params_round_trip_through_workorder_and_skill_execution():
+    """Construction Domain Pack の主要 typed params が WorkOrder/SkillExecution 双方を通る。"""
+    from cap.v0.core import site_agent_pb2
+
+    cases = [
+        (
+            "construction.excavate_batch",
+            construction.ExcavateBatchParams(
+                target_zone_id="dig-A", target_volume_m3=9.0, max_cycles=3),
+            construction.ExcavateBatchParams,
+            {"target_zone_id": "dig-A", "target_volume_m3": 9.0, "max_cycles": 3},
+        ),
+        (
+            "construction.haul_route",
+            construction.HaulRouteParams(
+                source_zone_id="dig-A", dump_zone_id="dump-A", total_volume_m3=9.0),
+            construction.HaulRouteParams,
+            {"source_zone_id": "dig-A", "dump_zone_id": "dump-A", "total_volume_m3": 9.0},
+        ),
+        (
+            "construction.dump",
+            construction.DumpParams(dump_zone_id="dump-A", volume_m3=3.0),
+            construction.DumpParams,
+            {"dump_zone_id": "dump-A", "volume_m3": 3.0},
+        ),
+    ]
+
+    for skill_id, payload, message_type, expected in cases:
+        wo = site_agent_pb2.WorkOrder(task_id=f"wo-{skill_id}", skill=skill_id)
+        wo.invocation.skill_id = skill_id
+        wo.invocation.typed_params.Pack(payload)
+        wo2 = site_agent_pb2.WorkOrder.FromString(wo.SerializeToString())
+        out = message_type()
+        assert wo2.invocation.typed_params.Unpack(out), skill_id
+
+        execution = skill_pb2.SkillExecution(
+            execution_id=f"exec-{skill_id}",
+            skill_id=skill_id,
+            task_id=wo.task_id,
+            machine_id="machine-1",
+        )
+        execution.invocation.CopyFrom(wo2.invocation)
+        execution2 = skill_pb2.SkillExecution.FromString(execution.SerializeToString())
+        out2 = message_type()
+        assert execution2.invocation.typed_params.Unpack(out2), skill_id
+
+        for field_name, expected_value in expected.items():
+            assert getattr(out2, field_name) == expected_value
+
+
 def test_intent_domain_intent_round_trips_construction_payload_via_any():
     """Intent.domain_intent(Any) が domain-specific intent を core 不変で運べる。"""
     payload = construction_intents.DigIntent(
