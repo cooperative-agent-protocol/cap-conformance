@@ -158,11 +158,16 @@ async def servicer(target_url):
 
 
 @pytest_asyncio.fixture
-async def server(target_url):
+async def server(servicer, target_url):
     """Start a gRPC server.
 
-    When --target is empty (default): start the bundled CapRuntimeServicer
-    on a random local port and yield (server, port).
+    When --target is empty (default): serve the **same** bundled
+    ``servicer`` instance that the test configures via
+    ``servicer._on_frame`` and inspects via ``servicer._received``, on a
+    random local port, and yield (server, port).  Serving the identical
+    instance is essential: tests override ``servicer._on_frame`` to make
+    the server dispatch WorkOrders, so the served servicer and the
+    ``servicer`` fixture must be one and the same object.
 
     When --target is set: yield (None, port) where port is parsed from the
     target URL; tests connect to the external endpoint via the `channel`
@@ -175,18 +180,10 @@ async def server(target_url):
         yield None, (host, port)
         return
 
-    # In-process reference servicer path.
-    received: list[tuple[str, runtime_pb2.CapFrame]] = []
-
-    async def on_frame(machine_id, frame):
-        received.append((machine_id, frame))
-        return None
-
-    s = CapRuntimeServicer(on_frame=on_frame)
-    s._received = received  # type: ignore
-
+    # In-process reference servicer path: serve the SAME instance as the
+    # `servicer` fixture so per-test `servicer._on_frame` overrides take effect.
     srv = grpc.aio.server()
-    runtime_pb2_grpc.add_CapRuntimeServiceServicer_to_server(s, srv)
+    runtime_pb2_grpc.add_CapRuntimeServiceServicer_to_server(servicer, srv)
     port = srv.add_insecure_port("[::]:0")
     await srv.start()
     yield srv, port

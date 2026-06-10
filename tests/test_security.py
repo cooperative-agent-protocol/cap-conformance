@@ -112,7 +112,7 @@ class TestRBACEnforcer:
                 task_id="test-task", skill="construction.excavate_batch",
             ))
         elif body_field == "progress_event":
-            from cap.v0 import events_pb2
+            from cap.v0.core import events_pb2
             frame.progress_event.CopyFrom(events_pb2.ProgressEvent(
                 task_id="test-task", state=common_pb2.TASK_STATE_RUNNING,
             ))
