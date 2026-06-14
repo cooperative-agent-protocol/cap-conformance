@@ -205,6 +205,24 @@ async def channel(server, target_url):
         yield ch
 
 
+@pytest_asyncio.fixture
+async def target_channel(target_url):
+    """A gRPC channel to the external --target endpoint.
+
+    Independent of the `servicer`/`server` fixtures (which exist only for the
+    in-process bundled reference and skip under --target). Tests using this
+    fixture self-skip when no --target is given, so the default-mode run is
+    unaffected. This is the entry point for the external-target conformance
+    profile in test_external_target.py.
+    """
+    if target_url is None:
+        pytest.skip("external-target profile: requires --target grpc://host:port")
+    host = target_url.hostname or "localhost"
+    port = target_url.port
+    async with grpc.aio.insecure_channel(f"{host}:{port}") as ch:
+        yield ch
+
+
 def make_test_manifest(machine_id: str = "test-machine-01"):
     """Create a minimal CapabilityManifest for testing."""
     return machine_agent_pb2.CapabilityManifest(
