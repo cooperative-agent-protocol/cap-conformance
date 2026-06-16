@@ -91,13 +91,25 @@ def pytest_configure(config):
         "markers",
         "core: mark a test as Core-only (always runs regardless of --domain).",
     )
+    config.addinivalue_line(
+        "markers",
+        "requirement(*ids): map this test to the normative requirement IDs "
+        "(Ch08 error codes / Ch10 conformance checkboxes) it discharges, for "
+        "the requirement-traceability matrix printed at end of run.",
+    )
+
+
+# Requirement-ID -> [test node ids], populated at collection time.
+_REQUIREMENT_COVERAGE: dict[str, list[str]] = {}
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip Domain Pack tests whose tag is not in --domain."""
+    """Skip Domain Pack tests whose tag is not in --domain, and build the
+    requirement-traceability index from `@pytest.mark.requirement(...)`."""
     enabled = config.getoption("--domain", default="") or ""
     enabled_set = {d.strip() for d in enabled.split(",") if d.strip()}
     skip_marker = pytest.mark.skip(reason="Domain Pack not enabled via --domain")
+    _REQUIREMENT_COVERAGE.clear()
     for item in items:
         for marker in item.iter_markers(name="domain"):
             if not marker.args:
@@ -106,6 +118,20 @@ def pytest_collection_modifyitems(config, items):
             if pack_name not in enabled_set:
                 item.add_marker(skip_marker)
                 break
+        for marker in item.iter_markers(name="requirement"):
+            for req_id in marker.args:
+                _REQUIREMENT_COVERAGE.setdefault(req_id, []).append(item.nodeid)
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """Print the requirement-traceability matrix (requirement ID -> tests)."""
+    if not _REQUIREMENT_COVERAGE:
+        return
+    terminalreporter.section("CAP requirement traceability")
+    for req_id in sorted(_REQUIREMENT_COVERAGE):
+        tests = _REQUIREMENT_COVERAGE[req_id]
+        names = ", ".join(t.split("::")[-1] for t in tests)
+        terminalreporter.write_line(f"  {req_id}: {names}")
 
 
 @pytest.fixture(scope="session")
