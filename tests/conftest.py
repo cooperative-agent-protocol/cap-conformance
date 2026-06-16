@@ -44,7 +44,7 @@ import pytest
 import pytest_asyncio
 from google.protobuf.timestamp_pb2 import Timestamp
 
-from cap.v0.core import runtime_pb2, runtime_pb2_grpc, common_pb2, machine_agent_pb2, alo_pb2, dialogue_pb2
+from cap.v0.core import runtime_pb2, runtime_pb2_grpc, common_pb2, machine_agent_pb2, entity_pb2, dialogue_pb2
 from cap_sdk.server import CapRuntimeServicer, serve
 from cap_sdk.frame import make_header, wrap_capability_manifest, wrap_heartbeat
 
@@ -237,8 +237,8 @@ def make_test_manifest(machine_id: str = "test-machine-01"):
     )
 
 
-def make_test_manifest_with_alo(machine_id: str = "test-machine-01"):
-    """Create a CapabilityManifest with ALODescriptor for testing."""
+def make_test_manifest_with_entity(machine_id: str = "test-machine-01"):
+    """Create a CapabilityManifest with EntityDescriptor for testing."""
     return machine_agent_pb2.CapabilityManifest(
         machine_id=machine_id,
         machine_type=common_pb2.MACHINE_TYPE_EXCAVATOR,
@@ -248,15 +248,15 @@ def make_test_manifest_with_alo(machine_id: str = "test-machine-01"):
         current_mode=common_pb2.MACHINE_MODE_SUPERVISED_AUTONOMY,
         hal_profile="test/fake",
         software_version="0.2.0-test",
-        alo_descriptor=alo_pb2.ALODescriptor(
-            alo_id=machine_id,
-            alo_type="machine",
+        entity_descriptor=entity_pb2.EntityDescriptor(
+            entity_id=machine_id,
+            entity_type="machine",
             canonical_name="テスト掘削機",
             properties=[
-                alo_pb2.ALOProperty(key="max_reach_m", value="9.9", unit="m", dtype="float"),
+                entity_pb2.EntityProperty(key="max_reach_m", value="9.9", unit="m", dtype="float"),
             ],
             state_description="テスト状態",
-            manager=alo_pb2.ALOManager(
+            manager=entity_pb2.EntityManager(
                 available_skills=["construction.excavate_batch"],
             ),
             owner_agent_id=machine_id,
@@ -276,18 +276,18 @@ def make_test_heartbeat(machine_id: str = "test-machine-01"):
     )
 
 
-def make_test_heartbeat_with_alo_summary(
+def make_test_heartbeat_with_entity_summary(
     machine_id: str = "test-machine-01",
     summary: str = "テスト機: 通常稼働中、燃料100%",
 ):
-    """Create a Heartbeat with alo_state_summary for testing."""
+    """Create a Heartbeat with entity_state_summary for testing."""
     return machine_agent_pb2.Heartbeat(
         machine_id=machine_id,
         current_mode=common_pb2.MACHINE_MODE_SUPERVISED_AUTONOMY,
         healthy=True,
         estop_active=False,
         fuel_or_battery_percent=100.0,
-        alo_state_summary=summary,
+        entity_state_summary=summary,
     )
 
 

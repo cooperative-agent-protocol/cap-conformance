@@ -19,7 +19,7 @@ import pytest
 import pytest_asyncio
 from google.protobuf.timestamp_pb2 import Timestamp
 
-from cap.v0.core import runtime_pb2, runtime_pb2_grpc, common_pb2, dialogue_pb2, alo_pb2, events_pb2
+from cap.v0.core import runtime_pb2, runtime_pb2_grpc, common_pb2, dialogue_pb2, entity_pb2, events_pb2
 from cap_sdk.frame import make_header, wrap_capability_manifest, wrap_agent_dialogue
 from .conftest import make_test_manifest, make_test_dialogue
 

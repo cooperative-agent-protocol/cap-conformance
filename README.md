@@ -34,7 +34,7 @@ Copyright 2026 CAP Authors
 
 | テストファイル | テスト数 | 内容 |
 |--------------|---------|------|
-| `test_alo_lifecycle` | 3 | ALO in manifest、state update、heartbeat summary |
+| `test_entity_descriptor_lifecycle` | 3 | Entity descriptor in manifest、state update、heartbeat summary |
 | `test_dialogue` | 4 | Dialogue round-trip、provenance、intent、CROSS_TASK 承認 |
 | `test_dialogue_edge_cases` | 5 | TASK scope 承認、PlanProposal、model_id 検証 |
 
