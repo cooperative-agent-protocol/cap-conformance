@@ -60,8 +60,7 @@ dependencies = [
 requires-dist = [
     { name = "cryptography", specifier = ">=42.0" },
     { name = "grpcio", specifier = ">=1.70.0" },
-    { name = "grpcio-tools", marker = "extra == 'codegen'", specifier = ">=1.81.0rc1" },
-    { name = "protobuf", specifier = ">=7.35.0" },
+    { name = "protobuf", specifier = ">=7.35.0,<8" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
 ]
