@@ -12,6 +12,8 @@ Copyright 2026 CAP Authors
 ## [Unreleased]
 
 ### Added
+- `tests/test_fleet_member_state.py` (cap-spec RFC-0002): `FleetMemberState.position_sigma_xy_m` unset reads as not
+  reported (not 0 m), an explicit 0.0 keeps its presence, and a receiver whose type lacks the fields round-trips them.
 - SPDX-License-Identifier headers across all test sources.
 - Skill-name retag in scenarios: `excavate_batch` → `construction.excavate_batch`,
   `haul_route` → `construction.haul_route`.
